@@ -1,13 +1,16 @@
-﻿namespace GraduationProject.API.Models
+﻿using System.Collections.Generic;
+
+namespace GraduationProject.API.Models
 {
     public class Level
     {
-        public int Id { get; set; } // الرقم التعريفي للمستوى
-        public string Name { get; set; } // اسم المستوى (مبتدئ - متوسط)
-        public string Description { get; set; } // وصف المستوى
+        public int Id { get; set; } 
+        public string LevelName { get; set; } 
+        public int MinScore { get; set; } 
+        public int MaxScore { get; set; } 
+        public string Description { get; set; } 
 
         // علاقة: المستوى الواحد جواه مستخدمين كتير
         public ICollection<User> Users { get; set; }
     }
 }
-

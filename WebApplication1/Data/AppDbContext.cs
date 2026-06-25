@@ -1,23 +1,27 @@
 ﻿using GraduationProject.API.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace GraduationProject.API.Data
 {
-    public class AppDbContext : DbContext
+    // 1. خليناه يورث من IdentityDbContext عشان جداول الحسابات الجاهزة
+    public class AppDbContext : IdentityDbContext<User>
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-        // بنعرفه إن دي الجداول اللي هتروح الـ SQL Server
-        public DbSet<User> Users { get; set; }
+        // 2. جدول الـ Levels بنعرفه هنا (أما جدول الـ Users فالـ Identity بتعرفه تلقائياً)
         public DbSet<Level> Levels { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // لتثبيت أسماء الجداول في الداتابيز بحروف صغيرة (Naming Convention)
+            // 3. السطر ده مهم جداً عشان يثبت إعدادات جداول الـ Identity الأساسية في الخلفية
+            base.OnModelCreating(modelBuilder);
+
+            // 4. تحديد أسماء الجداول بحروف صغيرة في الداتابيز
             modelBuilder.Entity<User>().ToTable("users");
             modelBuilder.Entity<Level>().ToTable("levels");
 
-            // تحديد العلاقة (المستخدم له مستوى واحد والمستوى له مستخدمين كتير)
+            // 5. تحديد العلاقة (المستخدم له مستوى واحد والمستوى له مستخدمين كتير)
             modelBuilder.Entity<User>()
                 .HasOne(u => u.Level)
                 .WithMany(l => l.Users)
