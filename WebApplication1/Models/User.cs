@@ -1,24 +1,34 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace GraduationProject.API.Models
 {
-    // خليناه يورث من IdentityUser عشان يآخد الخصائص الجاهزة
     public class User : IdentityUser
     {
-        // الحقول الأساسية (Id, Email, PasswordHash) موروثة تلقائياً وجاهزة من الـ IdentityUser
+        [Required]
+        public string FullName { get; set; } = string.Empty;
 
-        // 2. الحقول الخاصة بمشروعكم اللي مش موجودة في الـ Identity وهنزودها هنا:
-        public string FullName { get; set; } // الاسم بالكامل
-        public string ProfilePictureUrl { get; set; } // صورة الحساب
-        public string UserType { get; set; } // نوع المستخدم (مثلاً: طالب، مرشد، أدمن)
-        public int? MaxStudents { get; set; } //الحد الأقصى للطلابـ  
-        public string Specialization { get; set; } // التخصص
-        public bool IsActive { get; set; } = true; // هل الحساب نشط؟
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // وقت التسجيل
+        public string ProfilePictureUrl { get; set; } = "default.png";
 
-        // 3. العلاقات (الربط مع جدول المستويات)
-        public int LevelId { get; set; }
-        public Level Level { get; set; }
+        public string? UserType { get; set; } = "Student"; // جعلناه Nullable لتجنب تحذيرات الـ Compiler
+
+        public bool IsActive { get; set; } = true;
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public int? LevelId { get; set; }
+        public Level? Level { get; set; }
+
+        public string Specialization { get; set; } = "General";
+
+        public int? MaxStudents { get; set; }
+        public string? Department { get; set; }
+
+        public ICollection<CapstoneProject> SupervisedProjects { get; set; } = new List<CapstoneProject>();
+        public ICollection<ProjectMember> ProjectMembers { get; set; } = new List<ProjectMember>();
+        public ICollection<StudentExamResult> ExamResults { get; set; } = new List<StudentExamResult>();
+        public ICollection<RoadmapProgress> RoadmapProgresses { get; set; } = new List<RoadmapProgress>();
+        public ICollection<StudentTrack> StudentTracks { get; set; } = new List<StudentTrack>();
+        public ICollection<Roadmap> Roadmaps { get; set; } = new List<Roadmap>();
     }
 }

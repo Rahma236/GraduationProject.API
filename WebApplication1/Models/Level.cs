@@ -1,16 +1,25 @@
-﻿using System.Collections.Generic;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace GraduationProject.API.Models
 {
     public class Level
     {
-        public int Id { get; set; } 
-        public string LevelName { get; set; } 
-        public int MinScore { get; set; } 
-        public int MaxScore { get; set; } 
-        public string Description { get; set; } 
+        [Key]
+        public int Id { get; set; }
 
-        // علاقة: المستوى الواحد جواه مستخدمين كتير
+        [Required]
+        public string LevelName { get; set; } = string.Empty;
+
+        public int MinScore { get; set; }
+
+        public int MaxScore { get; set; }
+
+        public string? Description { get; set; }
+
         public ICollection<User> Users { get; set; }
+            = new List<User>();
+
+        public ICollection<Track> Tracks { get; set; }
+            = new List<Track>();
     }
 }

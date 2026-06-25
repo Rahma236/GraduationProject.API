@@ -1,5 +1,6 @@
-﻿using GraduationProject.API.Models;
+﻿using GraduationProject.API.Extensions;
 using GraduationProject.API.Data;
+using GraduationProject.API.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -8,43 +9,51 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. ربط الـ DbContext مع الـ Connection String (كودك القديم)
+// ===================== DB =====================
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// 2. إضافة خدمات الـ Identity لإدارة الحسابات والباسوردات (جديد)
-builder.Services.AddIdentity<User, IdentityRole>(options => {
-    options.Password.RequireDigit = true;         // الباسورد لازم يحتوي على رقم
-    options.Password.RequiredLength = 6;          // أقل طول للباسورد 6 حروف
-    options.Password.RequireNonAlphanumeric = false; // مش شرط رموز معقدة
-    options.Password.RequireUppercase = false;       // مش شرط حروف كابيتال
+// ===================== IDENTITY =====================
+builder.Services.AddIdentity<User, IdentityRole>(options =>
+{
+    options.Password.RequireDigit = true;
+    options.Password.RequiredLength = 6;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = false;
 })
 .AddEntityFrameworkStores<AppDbContext>()
 .AddDefaultTokenProviders();
 
-// 3. إعدادات الـ JWT Authentication لتأمين الـ APIs بالتوكن (جديد)
-builder.Services.AddAuthentication(options => {
+// ===================== AUTHENTICATION (JWT) =====================
+builder.Services.AddAuthentication(options =>
+{
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
-.AddJwtBearer(options => {
+.AddJwtBearer(options =>
+{
+    var jwtKey = builder.Configuration["Jwt:Key"];
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "GraduationProjectIssuer",
-        ValidAudience = builder.Configuration["Jwt:Audience"] ?? "GraduationProjectAudience",
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? "SuperSecretKey1234567890123456"))
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey!))
     };
 });
 
+builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+// ===================== GLOBAL EXCEPTION (تم الاكتفاء بواحدة فقط) =====================
+app.UseExceptionMiddleware();
 
 if (app.Environment.IsDevelopment())
 {
@@ -54,10 +63,27 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// 4. ترتيب الـ Middleware مهم جداً: التحقق من الهوية أولاً ثم الصلاحيات
-app.UseAuthentication(); // (جديد)
-app.UseAuthorization();  // (كودك القديم)
+// ===================== ORDER IS VERY IMPORTANT =====================
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 
+// ===================== ROLES INITIALIZATION =====================
+using (var scope = app.Services.CreateScope())
+{
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    string[] roles = { "Admin", "Student", "Professor" };
+
+    foreach (var role in roles)
+    {
+        if (!await roleManager.RoleExistsAsync(role))
+        {
+            await roleManager.CreateAsync(new IdentityRole(role));
+        }
+    }
+}
+
 app.Run();
+
+
