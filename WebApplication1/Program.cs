@@ -1,5 +1,9 @@
-var builder = WebApplication.CreateBuilder(args);
+﻿using Microsoft.EntityFrameworkCore;
 
+var builder = WebApplication.CreateBuilder(args);
+// ربط الـ DbContext مع الـ Connection String
+builder.Services.AddDbContext<GraduationProject.API.Data.AppDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 // Add services to the container.
 
 builder.Services.AddControllers();
@@ -23,4 +27,8 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+
+
+
 
